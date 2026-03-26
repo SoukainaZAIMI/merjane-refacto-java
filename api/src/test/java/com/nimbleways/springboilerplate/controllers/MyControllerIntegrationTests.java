@@ -12,11 +12,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.junit.Assert.assertEquals;
-
 // import com.fasterxml.jackson.databind.ObjectMapper;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
@@ -44,17 +43,21 @@ public class MyControllerIntegrationTests {
         private ProductRepository productRepository;
 
         @Test
-        public void processOrderShouldReturn() throws Exception {
-                List<Product> allProducts = createProducts();
-                Set<Product> orderItems = new HashSet<Product>(allProducts);
-                Order order = createOrder(orderItems);
-                productRepository.saveAll(allProducts);
-                order = orderRepository.save(order);
+        public void processOrderShouldReturnProcessOrderResponse() throws Exception {
+                Order order = createAndSaveOrder();
+
                 mockMvc.perform(post("/orders/{orderId}/processOrder", order.getId())
                                 .contentType("application/json"))
-                                .andExpect(status().isOk());
-                Order resultOrder = orderRepository.findById(order.getId()).get();
-                assertEquals(resultOrder.getId(), order.getId());
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.id").value(order.getId()));
+        }
+
+        private Order createAndSaveOrder() {
+                List<Product> allProducts = createProducts();
+                Set<Product> orderItems = new HashSet<>(allProducts);
+                Order order = createOrder(orderItems);
+                productRepository.saveAll(allProducts);
+                return orderRepository.save(order);
         }
 
         private static Order createOrder(Set<Product> products) {
