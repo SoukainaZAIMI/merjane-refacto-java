@@ -63,7 +63,7 @@ public class OrderProcessingServiceUnitTests {
         processOrder(orderId, product);
 
 
-        assertDelegatedWithoutSave(() -> verify(productService).notifyDelay(7, product), product);
+        assertDelegatedAndSaved(() -> verify(productService).notifyDelay(7, product), product);
     }
 
     // SEASONAL
@@ -91,7 +91,7 @@ public class OrderProcessingServiceUnitTests {
         processOrder(orderId, product);
 
 
-        assertDelegatedWithoutSave(() -> verify(productService).handleSeasonalProduct(product), product);
+        assertDelegatedAndSaved(() -> verify(productService).handleSeasonalProduct(product), product);
     }
 
     // EXPIRABLE
@@ -117,7 +117,7 @@ public class OrderProcessingServiceUnitTests {
         processOrder(orderId, product);
 
 
-        assertDelegatedWithoutSave(() -> verify(productService).handleExpiredProduct(product), product);
+        assertDelegatedAndSaved(() -> verify(productService).handleExpiredProduct(product), product);
     }
 
     private Long processOrder(Long orderId, Product product) {
@@ -130,9 +130,9 @@ public class OrderProcessingServiceUnitTests {
         verify(productRepository, times(1)).save(product);
     }
 
-    private void assertDelegatedWithoutSave(Runnable delegatedVerification, Product product) {
+    private void assertDelegatedAndSaved(Runnable delegatedVerification, Product product) {
         delegatedVerification.run();
-        verify(productRepository, never()).save(product);
+        verify(productRepository, times(1)).save(product);
     }
 
     private void stubOrder(Long orderId, Product product) {

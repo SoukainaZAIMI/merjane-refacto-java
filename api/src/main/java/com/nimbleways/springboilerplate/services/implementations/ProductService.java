@@ -6,21 +6,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.nimbleways.springboilerplate.entities.Product;
-import com.nimbleways.springboilerplate.repositories.ProductRepository;
 
 @Service
 public class ProductService {
 
     @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
     private NotificationService notificationService;
 
     public void notifyDelay(int leadTime, Product product) {
-        // Persist the updated lead time before notifying the customer.
+        // Business only: update the lead time and notify caller/customer.
         product.setLeadTime(leadTime);
-        productRepository.save(product);
         notificationService.sendDelayNotification(leadTime, product.getName());
     }
 
@@ -33,9 +28,9 @@ public class ProductService {
             product.setAvailable(0);
         }
 
-        // Out-of-season paths share the same notification + persistence flow.
+        // Out-of-season paths share the same notification flow.
         if (deliveredAfterSeason || seasonNotStarted(product, today)) {
-            notifyOutOfStockAndSave(product);
+            notifyOutOfStock(product);
             return;
         }
 
@@ -47,20 +42,17 @@ public class ProductService {
         if (isSellableExpirable(product, LocalDate.now())) {
             // Sell one unit when item is still valid and available.
             product.setAvailable(product.getAvailable() - 1);
-            productRepository.save(product);
             return;
         }
 
         // Expired or unavailable items are marked as out of stock and notified.
         notificationService.sendExpirationNotification(product.getName(), product.getExpiryDate());
         product.setAvailable(0);
-        productRepository.save(product);
     }
 
-    private void notifyOutOfStockAndSave(Product product) {
-        // Keep notification and persistence together for out-of-season decisions.
+    private void notifyOutOfStock(Product product) {
+        // Notification only; persistence is handled by the orchestration layer.
         notificationService.sendOutOfStockNotification(product.getName());
-        productRepository.save(product);
     }
 
     private boolean arrivesAfterSeason(Product product, LocalDate today) {

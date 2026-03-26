@@ -50,6 +50,7 @@ public class OrderProcessingService {
         // If out of stock but lead time exists, trigger a delay workflow.
         if (product.getLeadTime() > 0) {
             productService.notifyDelay(product.getLeadTime(), product);
+            productRepository.save(product);
         }
     }
 
@@ -62,6 +63,7 @@ public class OrderProcessingService {
 
         // Delegate off-season handling to product business rules.
         productService.handleSeasonalProduct(product);
+        productRepository.save(product);
     }
 
     private void handleExpirableProduct(Product product) {
@@ -72,6 +74,7 @@ public class OrderProcessingService {
 
         // Delegate expired/unavailable handling to product business rules.
         productService.handleExpiredProduct(product);
+        productRepository.save(product);
     }
 
     private boolean hasStock(Product product) {
